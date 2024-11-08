@@ -3,7 +3,9 @@
 // The list of file replacements can be found in `angular.json`.
 
 export const environment = {
-  production: false
+  production: false,
+  socketUrl: 'http://metube.colvid.top',  // 更新为您的域名
+  socketPath: '/socket.io'  // 添加 socket.io 路径
 };
 
 /*

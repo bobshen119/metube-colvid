@@ -1,4 +1,4 @@
-FROM docker.m.daocloud.io/library/node:20 AS builder
+FROM registry.npmmirror.com/node:18 AS builder
 
 WORKDIR /metube
 COPY ui/package*.json ./
@@ -15,11 +15,11 @@ COPY ui ./
 RUN ng build --configuration production
 
 
-FROM docker.m.daocloud.io/library/python:3.11-alpine
+FROM registry.npmmirror.com/python:3.11-alpine
 
 WORKDIR /app
 
-COPY Pipfile* docker-entrypoint.sh ./
+COPY Pipfile* docker-entrypoint.sh cookies.txt ./
 
 RUN sed -i 's/\r$//g' docker-entrypoint.sh && \
     chmod +x docker-entrypoint.sh && \

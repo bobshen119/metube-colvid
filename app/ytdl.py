@@ -83,6 +83,10 @@ class Download:
                     else:
                         filename = d['info_dict']['filepath']
                     self.status_queue.put({'status': 'finished', 'filename': filename})
+            with open('proxies.txt', 'r') as f:
+                proxies = [line.strip() for line in f if line.strip()]
+            proxy = proxies[0] if proxies else None  # Use the first proxy or None if the list is empty
+            
             ret = yt_dlp.YoutubeDL(params={
                 'quiet': True,
                 'no_color': True,
@@ -94,6 +98,7 @@ class Download:
                 'ignore_no_formats_error': True,
                 'progress_hooks': [put_status],
                 'postprocessor_hooks': [put_status_postprocessor],
+                'proxy': proxy,  # Updated proxy parameter
                 **self.ytdl_opts,
             }).download([self.info.url])
             self.status_queue.put({'status': 'finished' if ret == 0 else 'error'})
@@ -209,6 +214,21 @@ class DownloadQueue:
         self.done = PersistentQueue(self.config.STATE_DIR + '/completed')
         self.pending = PersistentQueue(self.config.STATE_DIR + '/pending')
         self.done.load()
+
+        # 基础 yt-dlp 选项
+        self.ydl_opts = {
+            'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
+            'cookiefile': 'cookies.txt',  # 添加 cookie 文件支持
+            'cookiesfrombrowser': ('chrome',),  # 从 Chrome 浏览器获取 cookie
+            'quiet': True,
+            'no_warnings': True,
+            'extract_flat': 'in_playlist',
+            'progress_hooks': [self._progress_hook],
+        }
+        
+        # 合并用户配置的选项
+        if isinstance(self.config.YTDL_OPTIONS, dict):
+            self.ydl_opts.update(self.config.YTDL_OPTIONS)
 
     async def __import_queue(self):
         for k, v in self.queue.saved_items():
